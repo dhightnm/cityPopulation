@@ -1,24 +1,22 @@
-const express = require('express');
-const bodyParser = require('body-parser');
+const fastify = require('fastify')({ logger: true });
 const { createTable, populateDatabase } = require('./utils/database');
-const populationRouter = require('./routes/population');
+const populationRoutes = require('./routes/population');
 
-const app = express();
 const PORT = 5555;
 
-
-app.use(bodyParser.json());
-app.use(bodyParser.text());
-
-app.use('/api/population', populationRouter);
+fastify.register(populationRoutes, { prefix: '/api/population' });
 
 const startServer = async () => {
     await createTable();
     await populateDatabase('./assets/city_populations.csv');
 
-app.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
-    });
+    try {
+        await fastify.listen({ port: PORT});
+        fastify.log.info(`Server listening on port ${PORT}`);
+    } catch (err) {
+        fastify.log.error(err);
+        process.exit(1);
+    }
 }
 
 startServer();
