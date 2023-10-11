@@ -28,16 +28,20 @@ let populateDatabase = async (filePath) => {
     });
 
     for await (const line of rl) {
-        const [state, city, population] = line.split(',');
+        const [city, state, population] = line.split(',');
         if (!isNaN(population)) {
             try {
-                await pool.query('INSERT INTO city_populations (state, city, population) VALUES ($1, $2, $3)', [state, city, population]);
-                console.log("Database populated successfully");
+                await pool.query(`INSERT INTO city_populations (city, state, population)
+                 VALUES ($1, $2, $3)
+                 ON CONFLICT (state, city)
+                 DO NOTHING`
+                 , [city, state, population]);
             } catch (err) {
                 console.log("ERROR POPULATING DATABASE", err);
             }
         }
     }
+    console.log("Database populated successfully");
 };
 
 module.exports = { pool, createTable, populateDatabase };  
